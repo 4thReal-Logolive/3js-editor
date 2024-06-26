@@ -58,12 +58,10 @@
 					"three-mesh-bvh": "https://unpkg.com/three-mesh-bvh@0.7.3/build/index.module.js"
 				}
 			}
-		</script>
+	</script>
 
 	<script type="module">
-
 		import * as THREE from 'three';
-
 		import { Editor } from './js/Editor.js';
 		import { Viewport } from './js/Viewport.js';
 		import { Toolbar } from './js/Toolbar.js';
@@ -95,6 +93,11 @@
 					catch (e) {
 						console.error("3js-editor: Error loading file", e);
 					}
+					break;
+				case "saving":
+						var message = { projectJSON: editor.toJSON() };
+						window.parent.postMessage(message, '*'); //post to logoLive
+						console.log("POSTING!!!!", editor.toJSON());
 					break;
 				default:
 					console.log('A message was received, but no event handler matched the message type: ', event.data);

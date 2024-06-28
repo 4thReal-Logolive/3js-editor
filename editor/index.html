@@ -62,30 +62,53 @@
 
 	<script type="module">
 		import * as THREE from 'three';
-		import { Editor } from './js/Editor.js';
+		import { Editor   } from './js/Editor.js';
 		import { Viewport } from './js/Viewport.js';
-		import { Toolbar } from './js/Toolbar.js';
-		import { Script } from './js/Script.js';
-		import { Player } from './js/Player.js';
-		import { Sidebar } from './js/Sidebar.js';
-		import { Menubar } from './js/Menubar.js';
-		import { Resizer } from './js/Resizer.js';
+		import { Toolbar  } from './js/Toolbar.js';
+		import { Script   } from './js/Script.js';
+		import { Player   } from './js/Player.js';
+		import { Sidebar  } from './js/Sidebar.js';
+		import { Menubar  } from './js/Menubar.js';
+		import { Resizer  } from './js/Resizer.js';
+
+		import { AddObjectCommand } from './js/commands/AddObjectCommand.js';
 
 		window.URL = window.URL || window.webkitURL;
 		window.BlobBuilder = window.BlobBuilder || window.WebKitBlobBuilder || window.MozBlobBuilder;
 
 		Number.prototype.format = function () { return this.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,'); };
 
+		//Add LogoLive Helpers Here
+
+		const getImageMeta = (url) => new Promise((resolve, reject) => {
+			const img       = new Image();
+			img.crossOrigin = "anonymous";
+			img.onload      = () => resolve(img);
+			img.onerror     = (err) => reject(err);
+			img.src         = url;
+		});
+
+		const setImagePlane = async (url) => {
+			const scalar   = 3;
+			const img      = await getImageMeta(url);
+			const geometry = new THREE.PlaneGeometry(scalar * img.naturalWidth / img.naturalHeight, scalar * 1);
+			const material = new THREE.MeshStandardMaterial();
+			material.map   = new THREE.TextureLoader().load(url);
+			const mesh     = new THREE.Mesh(geometry, material);
+			mesh.name      = 'Plane';
+
+			editor.execute(new AddObjectCommand(editor, mesh));
+		}
+
 		//Add LogoLive Event Handlers Here
 
 		window.addEventListener('message', (event) => {
-			console.log('got message from parent', event.data);
-			var json = event.data.projectJSON;
+			// console.log('got message from parent', event.data);
 			var messageType = event.data.type;
 
 			switch (messageType) {
 				case "loading": //load a project from Firebase storage
-					console.log('3js-editor is loading data: ', json);
+					var json = event.data.projectJSON;
 					try {
 						editor.clear();
 						editor.fromJSON(json);
@@ -95,9 +118,11 @@
 					}
 					break;
 				case "saving":
-						var message = { projectJSON: editor.toJSON() };
-						window.parent.postMessage(message, '*'); //post to logoLive
-						console.log("POSTING!!!!", editor.toJSON());
+					var message = { type: 'saving', projectJSON: editor.toJSON() };
+					window.parent.postMessage(message, '*'); //post to logoLive
+					break;
+				case "add-plane":
+					setImagePlane(event.data.imageUrl);
 					break;
 				default:
 					console.log('A message was received, but no event handler matched the message type: ', event.data);
@@ -107,24 +132,24 @@
 
 		//Add All HTML Elements
 
-		const editor = new Editor();
+		const editor  = new Editor();
 		window.editor = editor; // Expose editor to Console
-		window.THREE = THREE; // Expose THREE to APP Scripts and Console
+		window.THREE  = THREE; // Expose THREE to APP Scripts and Console
 
 		const viewport = new Viewport(editor);
+		const toolbar  = new Toolbar (editor);
+		const script   = new Script  (editor);
+		const player   = new Player  (editor);
+		const sidebar  = new Sidebar (editor);
+		const menubar  = new Menubar (editor);
+		const resizer  = new Resizer (editor);
 		document.body.appendChild(viewport.dom);
-		const toolbar = new Toolbar(editor);
-		document.body.appendChild(toolbar.dom);
-		const script = new Script(editor);
-		document.body.appendChild(script.dom);
-		const player = new Player(editor);
-		document.body.appendChild(player.dom);
-		const sidebar = new Sidebar(editor);
-		document.body.appendChild(sidebar.dom);
-		const menubar = new Menubar(editor);
-		document.body.appendChild(menubar.dom);
-		const resizer = new Resizer(editor);
-		document.body.appendChild(resizer.dom);
+		document.body.appendChild(toolbar .dom);
+		document.body.appendChild(script  .dom);
+		document.body.appendChild(player  .dom);
+		document.body.appendChild(sidebar .dom);
+		document.body.appendChild(menubar .dom);
+		document.body.appendChild(resizer .dom);
 
 		//Startup (Also Loads Most Recent Editor JSON)
 
@@ -134,7 +159,6 @@
 
 				if (state !== undefined) {
 					editor.fromJSON(state);
-					console.log('LOADING JSON FROM AUTOSAVE', state);
 				}
 
 				const selected = editor.config.getKey('selected');
@@ -155,9 +179,9 @@
 					editor.signals.savingStarted.dispatch();
 					timeout = setTimeout(function () {
 
-						var message = editor.toJSON();
-						window.parent.postMessage(message, '*'); //post to logoLive
-						console.log("POSTING!!!!", editor.toJSON());
+						// if you want to synchronize the Firebase storage with autosave
+						// var message = { type: 'autosave', projectJSON: editor.toJSON() };
+						// window.parent.postMessage(message, '*'); //post to logoLive
 
 						editor.storage.set(editor.toJSON());
 						editor.signals.savingFinished.dispatch();

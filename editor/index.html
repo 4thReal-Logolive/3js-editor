@@ -121,6 +121,11 @@
 					var message = { type: 'saving', projectJSON: editor.toJSON() };
 					window.parent.postMessage(message, '*'); //post to logoLive
 					break;
+				case "new-file":
+					editor.clear();
+					var message = { type: 'saving', projectJSON: editor.toJSON() };
+					window.parent.postMessage(message, '*'); //post to logoLive
+					break;
 				case "add-plane":
 					setImagePlane(event.data.imageUrl);
 					break;

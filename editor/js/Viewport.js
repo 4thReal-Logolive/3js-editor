@@ -349,6 +349,8 @@ function Viewport( editor ) {
 
 		pathtracer = new ViewportPathtracer( renderer );
 
+		renderer.domElement.setAttribute('id', 'RENDERER');
+
 		container.dom.appendChild( renderer.domElement );
 
 		render();

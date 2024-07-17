@@ -118,7 +118,12 @@
 					}
 					break;
 				case "saving":
-					var message = { type: 'saving', projectJSON: editor.toJSON() };
+					const canvas = document.getElementById('RENDERER');
+		      const imgUrl = canvas.toDataURL('image/jpeg');
+		      // console.log('element',element);
+		      // console.log(imgUrl);
+
+					var message = { type: 'saving', projectJSON: editor.toJSON(), imgUrl: imgUrl };
 					window.parent.postMessage(message, '*'); //post to logoLive
 					break;
 				case "new-file":

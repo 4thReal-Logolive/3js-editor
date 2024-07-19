@@ -117,18 +117,13 @@
 						console.error("3js-editor: Error loading file", e);
 					}
 					break;
+				case "new-file":
+					editor.clear(); //continue down into "saving"
 				case "saving":
 					const canvas = document.getElementById('RENDERER');
 		      const imgUrl = canvas.toDataURL('image/png');
-		      // console.log('element',element);
-		      // console.log(imgUrl);
 
 					var message = { type: 'saving', projectJSON: editor.toJSON(), imgUrl: imgUrl };
-					window.parent.postMessage(message, '*'); //post to logoLive
-					break;
-				case "new-file":
-					editor.clear();
-					var message = { type: 'saving', projectJSON: editor.toJSON() };
 					window.parent.postMessage(message, '*'); //post to logoLive
 					break;
 				case "add-plane":
